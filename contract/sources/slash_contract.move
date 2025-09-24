@@ -12,6 +12,8 @@ module 0xbcd2f2175728ca6431ba0b833f282cb62437f8a29b25671712f032dc719d00d8::slash
     struct WorkContract has copy, drop, store {
         employer: address,
         worker: address,
+        title: string,
+        description: string,
         amount: u64,
         deadline: u64,         // task must be completed before this
         is_completed: bool,
@@ -32,6 +34,7 @@ module 0xbcd2f2175728ca6431ba0b833f282cb62437f8a29b25671712f032dc719d00d8::slash
     employer: &signer,
     worker: address,
     amount: u64,
+
     deadline: u64,
     penalty: u64
     ) acquires WorkContractState {
@@ -61,6 +64,8 @@ module 0xbcd2f2175728ca6431ba0b833f282cb62437f8a29b25671712f032dc719d00d8::slash
         worker,
         amount,
         deadline,
+        title: string,
+        description: string,
         penalty,
         is_completed: false,
         is_claimed: false,
@@ -161,7 +166,7 @@ public fun get_all_contracts_by_employer(
     assert!(exists<WorkContractState>(employer_addr), 50);
 
     let state = borrow_global<WorkContractState>(employer_addr);
-    
+
     // CORRECT: Get the keys from the vector you are maintaining
     let contract_ids = &state.contract_ids;
 

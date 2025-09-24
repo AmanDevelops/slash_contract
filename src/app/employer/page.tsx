@@ -1,148 +1,247 @@
 // src/pages/dashboard.tsx
-
 "use client";
 
-import { Header } from "@/components/Header"; // Assuming you have a Header component
+import { Header } from "@/components/Header";
 import { useSlashContract } from "@/hooks/useSlashContract";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import { useEffect, useState } from "react";
+import { CheckCircle, Clock, RefreshCcw, Wallet, Plus } from "lucide-react";
 
 export default function DashboardPage() {
-  // 1. Destructure all the functions and state from your hook
   const { getMyContracts, createContract, markCompleted, refundOrFine, transactionInProgress } = useSlashContract();
+  const { connected } = useWallet();
 
-  const { account, connected } = useWallet();
-
-  // State for this component to hold the list of contracts and loading status
   const [contracts, setContracts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
 
-  // 2. Create a function to fetch and update the contract list
   const refreshContractList = async () => {
     if (!connected) return;
     setIsLoading(true);
     const myContracts = await getMyContracts();
-    console.log(myContracts);
     setContracts(myContracts);
     setIsLoading(false);
   };
 
-  // 3. Fetch the initial list of contracts when the wallet connects
   useEffect(() => {
     refreshContractList();
-    if (account) {
-      console.log("Account Address", account.address);
-    }
   }, [connected]);
 
-  // 4. Create an event handler for your "Create Contract" form
   const handleCreateSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+
     const worker = formData.get("worker") as string;
     const amount = parseInt(formData.get("amount") as string, 10);
+    const penalty = parseInt(formData.get("penalty") as string, 10);
+    const days = parseInt(formData.get("days") as string, 10);
 
-    // Example values for deadline and penalty
-    const deadline = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
-    const penalty = 100000;
+    const title = formData.get("title") as string;
+    const description = formData.get("description") as string;
+    const deadline = Math.floor(Date.now() / 1000) + days * 24 * 60 * 60;
 
-    await createContract(worker, amount, deadline, penalty);
-
-    // After the transaction, refresh the list to show the new contract
+    await createContract(worker, amount, deadline, penalty, title, description);
     await refreshContractList();
+    setShowModal(false);
   };
 
-  // Render the UI
   return (
-    <div className="app-background">
+    <div className="min-h-screen bg-[#0f172a] text-white">
       <Header />
       <main className="container mx-auto p-8">
         {!connected ? (
-          <p className="text-center">Please connect your wallet to manage your contracts.</p>
+          <div className="flex flex-col items-center justify-center mt-20 text-center">
+            <Wallet className="w-12 h-12 mb-4 text-gray-400" />
+            <p className="text-xl font-semibold">Please connect your wallet to manage contracts</p>
+          </div>
         ) : (
-          <div>
-            {/* --- Create Contract Section --- */}
-            <div className="mb-8 p-6 border rounded-lg shadow-md">
-              <h2 className="text-2xl font-bold mb-4">Create a New Contract</h2>
-              <form onSubmit={handleCreateSubmit} className="flex flex-col gap-4">
-                <input name="worker" placeholder="Worker's Wallet Address" required className="p-2 border rounded" />
-                <input
-                  name="amount"
-                  placeholder="Amount (in Octas)"
-                  type="number"
-                  required
-                  className="p-2 border rounded"
-                />
-                <button
-                  type="submit"
-                  disabled={transactionInProgress}
-                  className="gradient-button p-3 rounded-lg font-semibold"
-                >
-                  {transactionInProgress ? "Processing..." : "Create Escrow"}
-                </button>
-              </form>
-            </div>
-
-            {/* --- Contract List Section --- */}
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Your Contracts</h2>
+          <div className="bg-[#1e293b] p-6 rounded-2xl shadow-xl border border-gray-700">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold">Your Contracts</h2>
+              <div className="flex gap-3">
                 <button
                   onClick={refreshContractList}
                   disabled={isLoading || transactionInProgress}
-                  className="p-2 border rounded"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-700 hover:bg-gray-600 disabled:opacity-50"
                 >
+                  <RefreshCcw className="w-4 h-4" />
                   {isLoading ? "Refreshing..." : "Refresh"}
                 </button>
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700"
+                >
+                  <Plus className="w-4 h-4" /> Create Contract
+                </button>
               </div>
-              {isLoading ? (
-                <p>Loading your contracts...</p>
-              ) : contracts.length === 0 ? (
-                <p>You have not created any contracts yet.</p>
-              ) : (
-                <div className="space-y-4">
-                  {contracts.map((contract, id) => (
-                    <div key={id} className="p-4 border rounded-lg shadow">
-                      <p>
-                        <b>Contract ID:</b> {id}
-                      </p>
-                      <p>
-                        <b>Worker:</b> {contract.worker}
-                      </p>
-                      <p>
-                        <b>Status:</b> {contract.is_completed ? "Completed" : "In Progress"}
-                      </p>
-                      <div className="mt-4 flex gap-4">
-                        {/* 5. Wire up the buttons to the hook functions */}
-                        <button
-                          onClick={async () => {
-                            await markCompleted(id);
-                            await refreshContractList();
-                          }}
-                          disabled={contract.is_completed || transactionInProgress}
-                          className="bg-green-500 text-white p-2 rounded disabled:bg-gray-400"
-                        >
-                          Mark as Completed
-                        </button>
-                        <button
-                          onClick={async () => {
-                            await refundOrFine(id);
-                            await refreshContractList();
-                          }}
-                          disabled={contract.is_claimed || transactionInProgress}
-                          className="bg-blue-500 text-white p-2 rounded disabled:bg-gray-400"
-                        >
-                          Settle & Pay
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
+
+            {/* Contracts Section */}
+            {isLoading ? (
+              <p className="text-gray-400">Loading your contracts...</p>
+            ) : contracts.length === 0 ? (
+              <p className="text-gray-400">You have not created any contracts yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {contracts.map((contract, id) => (
+                  <div
+                    key={id}
+                    className="p-4 bg-[#0f172a] rounded-xl border border-gray-700 shadow-md hover:border-indigo-600 transition"
+                  >
+                    {/* Header */}
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-base font-semibold">Contract #{id}</h3>
+                      <span
+                        className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded-full ${
+                          contract.is_completed ? "bg-green-600/20 text-green-400" : "bg-yellow-600/20 text-yellow-400"
+                        }`}
+                      >
+                        {contract.is_completed ? (
+                          <>
+                            <CheckCircle className="w-3 h-3" /> Completed
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-3 h-3" /> In Progress
+                          </>
+                        )}
+                      </span>
+                    </div>
+
+                    {/* Contract Details */}
+                    <div className="space-y-0.5 text-gray-300 text-xs">
+                      <p>
+                        <span className="font-semibold">Worker:</span> {contract.worker}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Amount:</span> {contract.amount} Octas
+                      </p>
+                      <p>
+                        <span className="font-semibold">Penalty:</span> {contract.penalty} Octas
+                      </p>
+                      <p>
+                        <span className="font-semibold">Deadline:</span>{" "}
+                        {new Date(contract.deadline * 1000).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={async () => {
+                          await markCompleted(id);
+                          await refreshContractList();
+                        }}
+                        disabled={contract.is_completed || transactionInProgress}
+                        className="flex-1 py-1.5 text-sm rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-500 disabled:opacity-60"
+                      >
+                        Mark Completed
+                      </button>
+                      <button
+                        onClick={async () => {
+                          await refundOrFine(id);
+                          await refreshContractList();
+                        }}
+                        disabled={contract.is_claimed || transactionInProgress || !contract.is_completed}
+                        className="flex-1 py-1.5 text-sm rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
+                      >
+                        Settle & Pay
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </main>
+
+      {/* Create Contract Modal */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50">
+          <div className="bg-[#1e293b] p-6 rounded-2xl shadow-xl w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Create a New Contract</h2>
+            <form onSubmit={handleCreateSubmit} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-sm mb-1">Title</label>
+                <input
+                  name="title"
+                  placeholder="Contract title"
+                  required
+                  className="w-full p-3 rounded-lg bg-[#0f172a] border border-gray-600 focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm mb-1">Description</label>
+                <textarea
+                  name="description"
+                  placeholder="Contract description"
+                  required
+                  className="w-full p-3 rounded-lg bg-[#0f172a] border border-gray-600 focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm mb-1">Worker’s Wallet Address</label>
+                <input
+                  name="worker"
+                  placeholder="0x..."
+                  required
+                  className="w-full p-3 rounded-lg bg-[#0f172a] border border-gray-600 focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Amount (Octas)</label>
+                <input
+                  name="amount"
+                  placeholder="1000000"
+                  type="number"
+                  required
+                  className="w-full p-3 rounded-lg bg-[#0f172a] border border-gray-600 focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Penalty (Octas)</label>
+                <input
+                  name="penalty"
+                  placeholder="50000"
+                  type="number"
+                  required
+                  className="w-full p-3 rounded-lg bg-[#0f172a] border border-gray-600 focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm mb-1">Days to Complete</label>
+                <input
+                  name="days"
+                  placeholder="7"
+                  type="number"
+                  required
+                  className="w-full p-3 rounded-lg bg-[#0f172a] border border-gray-600 focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="flex-1 py-2 rounded-lg bg-gray-600 hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={transactionInProgress}
+                  className="flex-1 py-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50"
+                >
+                  {transactionInProgress ? "Processing..." : "Create"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

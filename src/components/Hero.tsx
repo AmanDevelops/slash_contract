@@ -21,7 +21,7 @@ export default function Hero() {
             size="lg"
             className="gradient-button"
           >
-            <Link href="/auth/register">{connected ? "Dashboard" : "Get Started"}</Link>
+            <Link href="/employer">{connected ? "Dashboard" : "Get Started"}</Link>
           </Button>
 
           {/* <Button asChild variant="outline" size="lg" className="dark:border-gray-500 dark:text-gray-200">

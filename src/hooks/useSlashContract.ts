@@ -44,7 +44,7 @@ export const useSlashContract = () => {
   /**
    * Submits a transaction to call the `create_contract` entry function.
    */
-  const createContract = async (worker: string, amount: number, deadline: number, penalty: number) => {
+  const createContract = async (worker: string, amount: number, deadline: number, penalty: number,title: string, description: string ) => {
     if (!account) throw new Error("Wallet not connected");
     setTransactionInProgress(true);
 
@@ -53,7 +53,7 @@ export const useSlashContract = () => {
       data: {
         function: `${MODULE_ADDRESS}::${MODULE_NAME}::create_contract`,
         typeArguments: [], // ✅ camelCase
-        functionArguments: [worker, amount.toString(), deadline.toString(), penalty.toString()],
+        functionArguments: [worker, amount.toString(), deadline.toString(), penalty.toString(), title, description],
       },
     };
 
