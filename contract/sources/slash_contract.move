@@ -30,51 +30,52 @@ module 0xbcd2f2175728ca6431ba0b833f282cb62437f8a29b25671712f032dc719d00d8::slash
     next_id: u64,  // incrementing id for contracts
     }
 
+    const ERROR_PENALTY_TOO_HIGH: u64 = 1;
+
     public entry fun create_contract(
-    employer: &signer,
-    worker: address,
-    amount: u64,
-
-    deadline: u64,
-    penalty: u64
-    ) acquires WorkContractState {
-    let employer_addr = signer::address_of(employer);
-
-    // ensure employer has initialized state
-    if (!exists<WorkContractState>(employer_addr)) {
-        move_to(employer, WorkContractState {
-            contracts: table::new(),
-            balances: table::new(),
-            contract_ids: vector::empty<u64>(),
-            next_id: 0,
-        });
-    };
-
-    let state = borrow_global_mut<WorkContractState>(employer_addr);
-
-    let contract_id = state.next_id;
-    state.next_id = state.next_id + 1;
-
-    // withdraw employer's locked funds
-    let locked_funds = coin::withdraw<AptosCoin>(employer, amount);
-
-    // store contract details
-    table::add(&mut state.contracts, contract_id, WorkContract {
-        employer: employer_addr,
-        worker,
-        amount,
-        deadline,
+        employer: &signer,
+        worker: address,
+        amount: u64,
+        deadline: u64,
+        penalty: u64,
         title: string,
-        description: string,
-        penalty,
-        is_completed: false,
-        is_claimed: false,
-    });
+        description: string
+    ) acquires WorkContractState {
+        let employer_addr = signer::address_of(employer);
 
-    // hold the funds in balances
-    table::add(&mut state.balances, contract_id, locked_funds);
-    vector::push_back(&mut state.contract_ids, contract_id);
+        // ensure penalty is not greater than amount
+        assert(penalty <= amount, ERROR_PENALTY_TOO_HIGH);
 
+        if (!exists<WorkContractState>(employer_addr)) {
+            move_to(employer, WorkContractState {
+                contracts: table::new(),
+                balances: table::new(),
+                contract_ids: vector::empty<u64>(),
+                next_id: 0,
+            });
+        };
+
+        let state = borrow_global_mut<WorkContractState>(employer_addr);
+
+        let contract_id = state.next_id;
+        state.next_id = state.next_id + 1;
+
+        let locked_funds = coin::withdraw<AptosCoin>(employer, amount);
+
+        table::add(&mut state.contracts, contract_id, WorkContract {
+            employer: employer_addr,
+            worker,
+            amount,
+            deadline,
+            title,
+            description,
+            penalty,
+            is_completed: false,
+            is_claimed: false,
+        });
+
+        table::add(&mut state.balances, contract_id, locked_funds);
+        vector::push_back(&mut state.contract_ids, contract_id);
     }
 
 

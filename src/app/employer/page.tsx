@@ -48,6 +48,13 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-[#0f172a] text-white">
       <Header />
+      <section className="container mx-auto p-8">
+        <h1 className="text-3xl font-bold mb-2">Work Contracts Dashboard</h1>
+        <p className="text-gray-400 mb-6">
+          Manage and track all your work contracts. Create new contracts, view ongoing work, mark tasks as completed,
+          and settle payments—all in one place.
+        </p>
+      </section>
       <main className="container mx-auto p-8">
         {!connected ? (
           <div className="flex flex-col items-center justify-center mt-20 text-center">
@@ -111,6 +118,12 @@ export default function DashboardPage() {
 
                     {/* Contract Details */}
                     <div className="space-y-0.5 text-gray-300 text-xs">
+                      <p>
+                        <span className="font-semibold">Title:</span> {contract.title}
+                      </p>
+                      <p>
+                        <span className="font-semibold">Description:</span> {contract.description}
+                      </p>
                       <p>
                         <span className="font-semibold">Worker:</span> {contract.worker}
                       </p>
