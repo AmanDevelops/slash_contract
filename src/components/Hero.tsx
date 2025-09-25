@@ -3,7 +3,7 @@ import { useWallet } from "@aptos-labs/wallet-adapter-react";
 import Link from "next/link";
 
 export default function Hero() {
-  const { account, connected, disconnect, wallet } = useWallet();
+  const { connected } = useWallet();
 
   return (
     <main className="flex-grow flex flex-col items-center justify-center h-[60vh] max-sm:h-[42vh]">
@@ -16,11 +16,7 @@ export default function Hero() {
         </p>
 
         <div className="mt-8 flex gap-4 flex-col sm:flex-row">
-          <Button
-            asChild
-            size="lg"
-            className="gradient-button"
-          >
+          <Button asChild size="lg" className="gradient-button">
             <Link href="/employer">{connected ? "Dashboard" : "Get Started"}</Link>
           </Button>
 
