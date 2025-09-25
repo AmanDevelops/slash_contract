@@ -1,6 +1,7 @@
-module 0xbcd2f2175728ca6431ba0b833f282cb62437f8a29b25671712f032dc719d00d8::slash_contract {
+module 0xa0686e5c229b06cbc108164cc7538a444264a3678692e51bac46a5ca4a2afd6e::slash_contract {
     use std::signer;
     use std::vector;
+    use std::string::{String};
     use aptos_framework::aptos_coin::AptosCoin;
     use aptos_framework::coin;
     use aptos_framework::table;
@@ -12,8 +13,8 @@ module 0xbcd2f2175728ca6431ba0b833f282cb62437f8a29b25671712f032dc719d00d8::slash
     struct WorkContract has copy, drop, store {
         employer: address,
         worker: address,
-        title: string,
-        description: string,
+        title: String,
+        description: String,
         amount: u64,
         deadline: u64,         // task must be completed before this
         is_completed: bool,
@@ -38,13 +39,13 @@ module 0xbcd2f2175728ca6431ba0b833f282cb62437f8a29b25671712f032dc719d00d8::slash
         amount: u64,
         deadline: u64,
         penalty: u64,
-        title: string,
-        description: string
+        title: String,
+        description: String
     ) acquires WorkContractState {
         let employer_addr = signer::address_of(employer);
 
         // ensure penalty is not greater than amount
-        assert(penalty <= amount, ERROR_PENALTY_TOO_HIGH);
+        assert!(penalty <= amount, ERROR_PENALTY_TOO_HIGH);
 
         if (!exists<WorkContractState>(employer_addr)) {
             move_to(employer, WorkContractState {

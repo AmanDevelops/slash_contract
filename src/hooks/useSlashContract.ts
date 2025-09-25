@@ -7,7 +7,7 @@ import { useState } from "react";
 
 // --- CONSTANTS ---
 // REPLACE WITH YOUR MODULE ADDRESS
-const MODULE_ADDRESS = "0xbcd2f2175728ca6431ba0b833f282cb62437f8a29b25671712f032dc719d00d8";
+const MODULE_ADDRESS = "0xa0686e5c229b06cbc108164cc7538a444264a3678692e51bac46a5ca4a2afd6e";
 const MODULE_NAME = "slash_contract";
 
 // --- TYPES ---

@@ -4,8 +4,8 @@
 import { Header } from "@/components/Header";
 import { useSlashContract } from "@/hooks/useSlashContract";
 import { useWallet } from "@aptos-labs/wallet-adapter-react";
+import { CheckCircle, Clock, Plus, RefreshCcw, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
-import { CheckCircle, Clock, RefreshCcw, Wallet, Plus } from "lucide-react";
 
 export default function DashboardPage() {
   const { getMyContracts, createContract, markCompleted, refundOrFine, transactionInProgress } = useSlashContract();
@@ -98,7 +98,7 @@ export default function DashboardPage() {
                   >
                     {/* Header */}
                     <div className="flex justify-between items-center mb-2">
-                      <h3 className="text-base font-semibold">Contract #{id}</h3>
+                      <h3 className="text-base font-semibold">{contract.title}</h3>
                       <span
                         className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded-full ${
                           contract.is_completed ? "bg-green-600/20 text-green-400" : "bg-yellow-600/20 text-yellow-400"
@@ -118,9 +118,6 @@ export default function DashboardPage() {
 
                     {/* Contract Details */}
                     <div className="space-y-0.5 text-gray-300 text-xs">
-                      <p>
-                        <span className="font-semibold">Title:</span> {contract.title}
-                      </p>
                       <p>
                         <span className="font-semibold">Description:</span> {contract.description}
                       </p>
